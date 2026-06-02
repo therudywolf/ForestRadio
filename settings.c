@@ -28,13 +28,32 @@
 #include "ui/menu.h"
 
 #ifdef ENABLE_FEAT_F4HWN_RESET_CHANNEL
-static const uint32_t gDefaultFrequencyTable[] =
+// ForestRadio: пресет-каналы под МСК (записываются при сбросе ALL).
+// Частота в единицах 10 Гц (МГц * 100000). scanlist: бит0=L1, бит1=L2, бит2=L3.
+typedef struct {
+    uint32_t         frequency;
+    const char      *name;
+    ModulationMode_t modulation;
+    uint8_t          bandwidth;   // BANDWIDTH_WIDE / BANDWIDTH_NARROW
+    uint8_t          scanlist;
+} default_channel_t;
+
+static const default_channel_t gDefaultChannelTable[] =
 {
-    14500000,    //
-    14550000,    //
-    43300000,    //
-    43320000,    //
-    43350000     //
+    { 44600625, "PMR 1",    MODULATION_FM, BANDWIDTH_NARROW, 0x01 }, // PMR-446 ch1 (как Motorola)
+    { 44601875, "PMR 2",    MODULATION_FM, BANDWIDTH_NARROW, 0x01 },
+    { 44603125, "PMR 3",    MODULATION_FM, BANDWIDTH_NARROW, 0x01 },
+    { 44604375, "PMR 4",    MODULATION_FM, BANDWIDTH_NARROW, 0x01 },
+    { 44605625, "PMR 5",    MODULATION_FM, BANDWIDTH_NARROW, 0x01 },
+    { 44606875, "PMR 6",    MODULATION_FM, BANDWIDTH_NARROW, 0x01 },
+    { 44608125, "PMR 7",    MODULATION_FM, BANDWIDTH_NARROW, 0x01 },
+    { 44609375, "PMR 8",    MODULATION_FM, BANDWIDTH_NARROW, 0x01 }, // 8 гражданских каналов
+    { 43307500, "LPD 1",    MODULATION_FM, BANDWIDTH_NARROW, 0x02 }, // LPD-433 ch1
+    { 14550000, "2M CALL",  MODULATION_FM, BANDWIDTH_WIDE,   0x02 }, // 145.500 2m FM call
+    { 14580000, "ISS",      MODULATION_FM, BANDWIDTH_WIDE,   0x04 }, // 145.800 ISS downlink
+    { 15182500, "RAIL",     MODULATION_FM, BANDWIDTH_WIDE,   0x04 }, // 151.825 РЖД
+    { 15680000, "MARINE16", MODULATION_FM, BANDWIDTH_WIDE,   0x04 }, // 156.800 marine ch16
+    { 12150000, "AIR SOS",  MODULATION_AM, BANDWIDTH_WIDE,   0x04 }, // 121.500 aviation guard (AM)
 };
 #endif
 
@@ -527,14 +546,20 @@ void SETTINGS_FactoryReset(bool bIsAll)
         RADIO_InitInfo(gRxVfo, FREQ_CHANNEL_FIRST + BAND6_400MHz, 43350000);
 
         #ifdef ENABLE_FEAT_F4HWN_RESET_CHANNEL
-            // set the first few memory channels
-            for (i = 0; i < ARRAY_SIZE(gDefaultFrequencyTable); i++)
+            // ForestRadio: записываем пресет-каналы с именами/модуляцией/скан-листами
+            for (i = 0; i < ARRAY_SIZE(gDefaultChannelTable); i++)
             {
-                const uint32_t Frequency   = gDefaultFrequencyTable[i];
-                gRxVfo->freq_config_RX.Frequency = Frequency;
-                gRxVfo->freq_config_TX.Frequency = Frequency;
-                gRxVfo->Band               = FREQUENCY_GetBand(Frequency);
-                SETTINGS_SaveChannel(MR_CHANNEL_FIRST + i, 0, gRxVfo, 2);
+                const default_channel_t *d = &gDefaultChannelTable[i];
+                RADIO_InitInfo(gRxVfo, MR_CHANNEL_FIRST + i, d->frequency);
+                gRxVfo->freq_config_TX.Frequency = d->frequency;
+                gRxVfo->Modulation               = d->modulation;
+                gRxVfo->CHANNEL_BANDWIDTH         = d->bandwidth;
+                gRxVfo->SCANLIST1_PARTICIPATION   = (d->scanlist >> 0) & 1u;
+                gRxVfo->SCANLIST2_PARTICIPATION   = (d->scanlist >> 1) & 1u;
+                gRxVfo->SCANLIST3_PARTICIPATION   = (d->scanlist >> 2) & 1u;
+                memset(gRxVfo->Name, 0, sizeof(gRxVfo->Name));
+                strncpy(gRxVfo->Name, d->name, 10);
+                SETTINGS_SaveChannel(MR_CHANNEL_FIRST + i, 0, gRxVfo, 3);
             }
         #endif
 
