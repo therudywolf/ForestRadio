@@ -37,7 +37,7 @@ ENABLE_RSSI_BAR                 ?= 1
 ENABLE_AUDIO_BAR                ?= 1
 ENABLE_COPY_CHAN_TO_VFO         ?= 1
 ENABLE_REDUCE_LOW_MID_TX_POWER  ?= 1
-ENABLE_BYP_RAW_DEMODULATORS     ?= 1
+ENABLE_BYP_RAW_DEMODULATORS     ?= 0
 ENABLE_BLMIN_TMP_OFF            ?= 0
 ENABLE_SCAN_RANGES              ?= 1
 
@@ -79,7 +79,7 @@ ENABLE_CLANG                    ?= 0
 ENABLE_SWD                      ?= 0
 ENABLE_OVERLAY                  ?= 0
 ENABLE_LTO                      ?= 1
-ENABLE_EXPERIMENTAL_CLFAGS      ?= 1
+ENABLE_EXPERIMENTAL_CLFAGS      ?= 0
 
 #############################################################
 
