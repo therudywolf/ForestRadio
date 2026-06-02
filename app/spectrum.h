@@ -170,6 +170,8 @@ typedef struct ScanInfo
     uint32_t f, fPeak;
     uint16_t scanStep;
     uint16_t measurementsCount;
+    uint16_t noise, glitch;          // ForestRadio E1: текущий сэмпл
+    uint16_t noisePeak, glitchPeak;  // ForestRadio E1: значения на пике RSSI
 } ScanInfo;
 
 typedef struct PeakInfo
@@ -178,6 +180,7 @@ typedef struct PeakInfo
     uint16_t rssi;
     uint32_t f;
     uint16_t i;
+    uint16_t noise, glitch;  // ForestRadio E1: гибридный детектор
 } PeakInfo;
 
 void APP_RunSpectrum(void);

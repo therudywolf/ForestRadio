@@ -361,7 +361,26 @@ static void SetF(uint32_t f)
 
 // Spectrum related
 
+#ifdef ENABLE_FEAT_F4HWN_SPECTRUM
+// --- ForestRadio E1: гибридный детектор (RSSI + шум REG_65 + глитч REG_63) ---
+// Реальный сигнал = высокий RSSI И низкий шум/глитч; помеха/мусор = шум/глитч
+// остаются высокими. Меньше = чище. Значения ЛЕНИВЫЕ для v1 — точно подобрать
+// на железе (если сигналы не открываются — поднять, если ловит мусор — опустить).
+#ifndef SPECTRUM_NOISE_GATE
+#define SPECTRUM_NOISE_GATE  90   // REG_65 (0..127): отвергаем пик с шумом выше
+#endif
+#ifndef SPECTRUM_GLITCH_GATE
+#define SPECTRUM_GLITCH_GATE 240  // REG_63 (0..255): отвергаем пик с глитчем выше
+#endif
+bool IsPeakOverLevel()
+{
+    return peak.rssi >= settings.rssiTriggerLevel
+        && peak.noise <= SPECTRUM_NOISE_GATE
+        && peak.glitch <= SPECTRUM_GLITCH_GATE;
+}
+#else
 bool IsPeakOverLevel() { return peak.rssi >= settings.rssiTriggerLevel; }
+#endif
 
 static void ResetPeak()
 {
@@ -538,6 +557,10 @@ static void ResetScanStats()
     scanInfo.rssiMax = 0;
     scanInfo.iPeak = 0;
     scanInfo.fPeak = 0;
+#ifdef ENABLE_FEAT_F4HWN_SPECTRUM
+    scanInfo.noisePeak = 0;
+    scanInfo.glitchPeak = 0;
+#endif
 }
 
 static void InitScan()
@@ -582,6 +605,11 @@ static void UpdateScanInfo()
         scanInfo.rssiMax = scanInfo.rssi;
         scanInfo.fPeak = scanInfo.f;
         scanInfo.iPeak = scanInfo.i;
+#ifdef ENABLE_FEAT_F4HWN_SPECTRUM
+        // ForestRadio E1: запоминаем шум/глитч на самом сильном сэмпле
+        scanInfo.noisePeak = scanInfo.noise;
+        scanInfo.glitchPeak = scanInfo.glitch;
+#endif
     }
 
     if (scanInfo.rssi < scanInfo.rssiMin)
@@ -606,6 +634,10 @@ static void UpdatePeakInfoForce()
     peak.rssi = scanInfo.rssiMax;
     peak.f = scanInfo.fPeak;
     peak.i = scanInfo.iPeak;
+#ifdef ENABLE_FEAT_F4HWN_SPECTRUM
+    peak.noise = scanInfo.noisePeak;
+    peak.glitch = scanInfo.glitchPeak;
+#endif
     AutoTriggerLevel();
 }
 
@@ -633,6 +665,11 @@ static void SetRssiHistory(uint16_t idx, uint16_t rssi)
 static void Measure()
 {
     uint16_t rssi = scanInfo.rssi = GetRssi();
+#ifdef ENABLE_FEAT_F4HWN_SPECTRUM
+    // ForestRadio E1: метрики качества сигнала на текущей частоте
+    scanInfo.noise  = BK4819_ReadRegister(0x65) & 0x007F;
+    scanInfo.glitch = BK4819_ReadRegister(0x63) & 0x00FF;
+#endif
     SetRssiHistory(scanInfo.i, rssi);
 }
 
@@ -1619,6 +1656,10 @@ static void UpdateStill()
     preventKeypress = false;
 
     peak.rssi = scanInfo.rssi;
+#ifdef ENABLE_FEAT_F4HWN_SPECTRUM
+    peak.noise = scanInfo.noise;
+    peak.glitch = scanInfo.glitch;
+#endif
     AutoTriggerLevel();
 
     if (IsPeakOverLevel() || monitorMode) {
@@ -1657,6 +1698,10 @@ static void UpdateListening()
     }
 
     peak.rssi = scanInfo.rssi;
+#ifdef ENABLE_FEAT_F4HWN_SPECTRUM
+    peak.noise = scanInfo.noise;
+    peak.glitch = scanInfo.glitch;
+#endif
     redrawScreen = true;
 
     #ifdef ENABLE_FEAT_F4HWN_SPECTRUM
