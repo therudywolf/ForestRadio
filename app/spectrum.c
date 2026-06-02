@@ -87,6 +87,31 @@ SpectrumSettings settings = {.stepsCount = STEPS_64,
                              .dbMin = -130,
                              .dbMax = -50};
 
+#ifdef ENABLE_SCAN_RANGES
+// ForestRadio: пресеты диапазонов для спектра (клавиша MENU листает по кругу).
+// Частоты в единицах 10 Гц (МГц * 100000). Подобраны под РФ/МСК.
+typedef struct {
+    const char      *name;
+    uint32_t         startFreq;
+    uint32_t         stopFreq;
+    ScanStep         step;
+    ModulationMode_t modulation;  // целевая модуляция (переключи клавишей 0)
+} ScanRangePreset;
+
+static const ScanRangePreset scanRangePresets[] = {
+    { "PMR446",  44600000, 44620000, S_STEP_6_25kHz,  MODULATION_FM }, // безлиц. walkie
+    { "LPD433",  43307500, 43477500, S_STEP_25_0kHz,  MODULATION_FM }, // безлиц. + ISM пульты
+    { "UHF LMR", 40000000, 47000000, S_STEP_12_5kHz,  MODULATION_FM }, // такси/охрана/70см
+    { "2M HAM",  14400000, 14600000, S_STEP_12_5kHz,  MODULATION_FM }, // 2м любители, ISS
+    { "VHF LMR", 14600000, 17400000, S_STEP_12_5kHz,  MODULATION_FM }, // бизнес/служебные VHF
+    { "AIR",     11800000, 13700000, S_STEP_12_5kHz,  MODULATION_AM }, // авиация (AM!)
+    { "MARINE",  15600000, 16200000, S_STEP_25_0kHz,  MODULATION_FM }, // морская/речная VHF
+    { "RAIL",    15170000, 15600000, S_STEP_25_0kHz,  MODULATION_FM }, // РЖД
+    { "FM BC",    8750000, 10800000, S_STEP_100_0kHz, MODULATION_FM }, // вещательное FM
+};
+static uint8_t scanRangePresetIdx = 0;
+#endif
+
 uint32_t fMeasure = 0;
 uint32_t currentFreq, tempFreq;
 uint16_t rssiHistory[128];
@@ -1218,6 +1243,29 @@ static void DrawArrow(uint8_t x)
     }
 }
 
+#ifdef ENABLE_SCAN_RANGES
+// ForestRadio: применить пресет диапазона и перезапустить свип
+static void ApplyScanRangePreset(uint8_t idx)
+{
+    const ScanRangePreset *p = &scanRangePresets[idx];
+    gScanRangeStart = p->startFreq;
+    gScanRangeStop  = p->stopFreq;
+    settings.scanStepIndex = p->step;
+    settings.stepsCount    = STEPS_128;
+    currentFreq = initialFreq = gScanRangeStart;
+    ResetBlacklist();
+    RelaunchScan();
+    redrawScreen = true;
+    redrawStatus = true;
+}
+
+static void NextScanRangePreset(void)
+{
+    scanRangePresetIdx = (scanRangePresetIdx + 1u) % ARRAY_SIZE(scanRangePresets);
+    ApplyScanRangePreset(scanRangePresetIdx);
+}
+#endif
+
 static void OnKeyDown(uint8_t key)
 {
     switch (key)
@@ -1287,6 +1335,9 @@ static void OnKeyDown(uint8_t key)
         TuneToPeak();
         break;
     case KEY_MENU:
+#ifdef ENABLE_SCAN_RANGES
+        NextScanRangePreset();   // ForestRadio: листать пресеты диапазонов
+#endif
         break;
     case KEY_EXIT:
         if (menuState)
