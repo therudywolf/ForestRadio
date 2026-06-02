@@ -51,6 +51,9 @@ extern const uint8_t BITMAP_compand[6];
 
 extern const uint8_t BITMAP_NOAA[12];
 
+// ForestRadio: волчий boot-логотип 🐺 (42 x 37px, 5 страниц)
+extern const uint8_t BITMAP_Wolf[5][42];
+
 #ifndef ENABLE_CUSTOM_MENU_LAYOUT
     extern const uint8_t BITMAP_CurrentIndicator[8];
 #endif

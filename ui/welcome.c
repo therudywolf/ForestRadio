@@ -1,5 +1,8 @@
-/* Copyright 2023 Dual Tachyon
+/* Original work Copyright 2023 Dual Tachyon
  * https://github.com/DualTachyon
+ *
+ * Welcome screen reworked for ForestRadio (boot wolf logo + callsign)
+ * by therudywolf, building on the EGZUMER / F4HWN lineage.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,9 +37,9 @@
 
 void UI_DisplayReleaseKeys(void)
 {
-    memset(gStatusLine,  0, sizeof(gStatusLine));
+    memset(gStatusLine, 0, sizeof(gStatusLine));
 #if defined(ENABLE_FEAT_F4HWN_CTR) || defined(ENABLE_FEAT_F4HWN_INV)
-        ST7565_ContrastAndInv();
+    ST7565_ContrastAndInv();
 #endif
     UI_DisplayClear();
 
@@ -47,164 +50,55 @@ void UI_DisplayReleaseKeys(void)
     ST7565_BlitFullScreen();
 }
 
+// ForestRadio boot screen: волчий силуэт 🐺 по центру + позывной снизу.
+// Позывной берётся из редактируемой строки приветствия (меню POnMsg / EEPROM 0x0EB0);
+// если пусто — показываем "FOREST".
 void UI_DisplayWelcome(void)
 {
-    char WelcomeString0[16];
-    char WelcomeString1[16];
-    char WelcomeString2[16];
-    char WelcomeString3[20];
+    char callsign[16];
+    char voltage[16];
 
-    memset(gStatusLine,  0, sizeof(gStatusLine));
-
+    memset(gStatusLine, 0, sizeof(gStatusLine));
 #if defined(ENABLE_FEAT_F4HWN_CTR) || defined(ENABLE_FEAT_F4HWN_INV)
-        ST7565_ContrastAndInv();
+    ST7565_ContrastAndInv();
 #endif
     UI_DisplayClear();
-
-#ifdef ENABLE_FEAT_F4HWN
     ST7565_BlitStatusLine();
     ST7565_BlitFullScreen();
-    
-    if (gEeprom.POWER_ON_DISPLAY_MODE == POWER_ON_DISPLAY_MODE_NONE || gEeprom.POWER_ON_DISPLAY_MODE == POWER_ON_DISPLAY_MODE_SOUND) {
+
+    if (gEeprom.POWER_ON_DISPLAY_MODE == POWER_ON_DISPLAY_MODE_NONE ||
+        gEeprom.POWER_ON_DISPLAY_MODE == POWER_ON_DISPLAY_MODE_SOUND)
+    {
         ST7565_FillScreen(0x00);
-#else
-    if (gEeprom.POWER_ON_DISPLAY_MODE == POWER_ON_DISPLAY_MODE_NONE || gEeprom.POWER_ON_DISPLAY_MODE == POWER_ON_DISPLAY_MODE_FULL_SCREEN) {
-        ST7565_FillScreen(0xFF);
-#endif
-    } else {
-        memset(WelcomeString0, 0, sizeof(WelcomeString0));
-        memset(WelcomeString1, 0, sizeof(WelcomeString1));
+        return;
+    }
 
-        EEPROM_ReadBuffer(0x0EB0, WelcomeString0, 16);
-        EEPROM_ReadBuffer(0x0EC0, WelcomeString1, 16);
+    memset(callsign, 0, sizeof(callsign));
+    EEPROM_ReadBuffer(0x0EB0, callsign, 16);
 
-        sprintf(WelcomeString2, "%u.%02uV %u%%",
+    if (gEeprom.POWER_ON_DISPLAY_MODE == POWER_ON_DISPLAY_MODE_VOLTAGE)
+    {
+        sprintf(voltage, "%u.%02uV %u%%",
                 gBatteryVoltageAverage / 100,
                 gBatteryVoltageAverage % 100,
                 BATTERY_VoltsToPercent(gBatteryVoltageAverage));
-
-        if (gEeprom.POWER_ON_DISPLAY_MODE == POWER_ON_DISPLAY_MODE_VOLTAGE)
-        {
-            strcpy(WelcomeString0, "VOLTAGE");
-            strcpy(WelcomeString1, WelcomeString2);
-        }
-        else if(gEeprom.POWER_ON_DISPLAY_MODE == POWER_ON_DISPLAY_MODE_ALL)
-        {
-            if(strlen(WelcomeString0) == 0 && strlen(WelcomeString1) == 0)
-            {
-                strcpy(WelcomeString0, "WELCOME");
-                strcpy(WelcomeString1, WelcomeString2);
-            }
-            else if(strlen(WelcomeString0) == 0 || strlen(WelcomeString1) == 0)
-            {
-                if(strlen(WelcomeString0) == 0)
-                {
-                    strcpy(WelcomeString0, WelcomeString1);
-                }
-                strcpy(WelcomeString1, WelcomeString2);
-            }
-        }
-        else if(gEeprom.POWER_ON_DISPLAY_MODE == POWER_ON_DISPLAY_MODE_MESSAGE)
-        {
-            if(strlen(WelcomeString0) == 0)
-            {
-                strcpy(WelcomeString0, "WELCOME");
-            }
-
-            if(strlen(WelcomeString1) == 0)
-            {
-                strcpy(WelcomeString1, "BIENVENUE");
-            }
-        }
-
-        UI_PrintString(WelcomeString0, 0, 127, 0, 10);
-        UI_PrintString(WelcomeString1, 0, 127, 2, 10);
-
-#ifdef ENABLE_FEAT_F4HWN
-        UI_PrintStringSmallNormal(Version, 0, 128, 4);
-
-        UI_DrawLineBuffer(gFrameBuffer, 0, 31, 127, 31, 1); // Be ware, status zone = 8 lines, the rest = 56 ->total 64
-
-        for (uint8_t i = 18; i < 110; i++)
-        {
-            gFrameBuffer[4][i] ^= 0xFF;
-        }
-
-        sprintf(WelcomeString3, "%s Edition", Edition);
-        UI_PrintStringSmallNormal(WelcomeString3, 0, 127, 6);
-
-        /*
-        #ifdef ENABLE_FEAT_F4HWN_RESCUE_OPS
-            #if ENABLE_FEAT_F4HWN_RESCUE_OPS > 1
-                UI_PrintStringSmallNormal(Edition, 18, 0, 6);
-                if(gEeprom.MENU_LOCK == true) {
-                    memcpy(gFrameBuffer[6] + 103, BITMAP_Ready, sizeof(BITMAP_Ready));
-                }
-                else
-                {
-                    memcpy(gFrameBuffer[6] + 103, BITMAP_NotReady, sizeof(BITMAP_NotReady));                    
-                }
-            #else
-                UI_PrintStringSmallNormal(Edition, 18, 0, 5);
-                memcpy(gFrameBuffer[5] + 103, BITMAP_Ready, sizeof(BITMAP_Ready));
-                
-                #ifdef ENABLE_FEAT_F4HWN_RESCUE_OPS
-                    UI_PrintStringSmallNormal("RescueOps", 18, 0, 6);
-                    if(gEeprom.MENU_LOCK == true) {
-                        memcpy(gFrameBuffer[6] + 103, BITMAP_Ready, sizeof(BITMAP_Ready));
-                    }
-                    else
-                    {
-                        memcpy(gFrameBuffer[6] + 103, BITMAP_NotReady, sizeof(BITMAP_NotReady));
-                    }
-                #endif
-            #endif
-        #else
-            UI_PrintStringSmallNormal(Edition, 18, 0, 6);
-            memcpy(gFrameBuffer[6] + 103, BITMAP_Ready, sizeof(BITMAP_Ready));                    
-        #endif
-        */
-
-        /*
-        #ifdef ENABLE_SPECTRUM
-            #ifdef ENABLE_FMRADIO
-                    UI_PrintStringSmallNormal(Based, 0, 127, 5);
-                    UI_PrintStringSmallNormal(Credits, 0, 127, 6);
-            #else
-                    UI_PrintStringSmallNormal("Bandscope  ", 0, 127, 5);
-                    memcpy(gFrameBuffer[5] + 95, BITMAP_Ready, sizeof(BITMAP_Ready));
-
-                    #ifdef ENABLE_FEAT_F4HWN_RESCUE_OPS
-                        UI_PrintStringSmallNormal("RescueOps  ", 0, 127, 6);
-                        if(gEeprom.MENU_LOCK == true) {
-                            memcpy(gFrameBuffer[6] + 95, BITMAP_Ready, sizeof(BITMAP_Ready));
-                        }
-                    #else
-                        UI_PrintStringSmallNormal("Broadcast  ", 0, 127, 6);
-                    #endif
-            #endif
-        #else
-            #ifdef ENABLE_FEAT_F4HWN_RESCUE_OPS
-                UI_PrintStringSmallNormal("RescueOps  ", 0, 127, 5);
-                if(gEeprom.MENU_LOCK == true) {
-                    memcpy(gFrameBuffer[5] + 95, BITMAP_Ready, sizeof(BITMAP_Ready));
-                }
-            #else
-                UI_PrintStringSmallNormal("Bandscope  ", 0, 127, 5);
-            #endif
-            UI_PrintStringSmallNormal("Broadcast  ", 0, 127, 6);
-            memcpy(gFrameBuffer[6] + 95, BITMAP_Ready, sizeof(BITMAP_Ready));
-        #endif
-        */
-#else
-        UI_PrintStringSmallNormal(Version, 0, 127, 6);
-#endif
-
-        //ST7565_BlitStatusLine();  // blank status line : I think it's useless
-        ST7565_BlitFullScreen();
-
-        #ifdef ENABLE_FEAT_F4HWN_SCREENSHOT
-            getScreenShot(true);
-        #endif
+        strcpy(callsign, voltage);
     }
+    else if (strlen(callsign) == 0)
+    {
+        strcpy(callsign, "FOREST");
+    }
+
+    // Волк: 42x37px, 5 страниц, по центру по X (xoff = (128-42)/2 = 43)
+    for (uint8_t p = 0; p < 5; p++)
+        memcpy(gFrameBuffer[p] + 43, BITMAP_Wolf[p], sizeof(BITMAP_Wolf[p]));
+
+    // Позывной мелким шрифтом по центру нижней строки
+    UI_PrintStringSmallNormal(callsign, 0, 127, 6);
+
+    ST7565_BlitFullScreen();
+
+#ifdef ENABLE_FEAT_F4HWN_SCREENSHOT
+    getScreenShot(true);
+#endif
 }
