@@ -5,7 +5,7 @@
 
 # ---- STOCK QUANSHENG FEATURES ----
 ENABLE_FMRADIO                  ?= 0
-ENABLE_UART                     ?= 0
+ENABLE_UART                     ?= 1
 ENABLE_AIRCOPY                  ?= 0
 ENABLE_NOAA                     ?= 0
 ENABLE_VOICE                    ?= 0
@@ -60,7 +60,7 @@ ENABLE_FEAT_F4HWN_SLEEP         ?= 1
 ENABLE_FEAT_F4HWN_RESUME_STATE  ?= 1
 ENABLE_FEAT_F4HWN_NARROWER      ?= 1
 ENABLE_FEAT_F4HWN_INV           ?= 0
-ENABLE_FEAT_F4HWN_CTR           ?= 0
+ENABLE_FEAT_F4HWN_CTR           ?= 1
 ENABLE_FEAT_F4HWN_RESCUE_OPS    ?= 0
 ENABLE_FEAT_F4HWN_VOL           ?= 0
 ENABLE_FEAT_F4HWN_RESET_CHANNEL ?= 1
