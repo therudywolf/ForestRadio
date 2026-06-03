@@ -88,6 +88,8 @@ static void processFKeyFunction(const KEY_Code_t Key, const bool beep)
 {
     uint8_t Vfo = gEeprom.TX_VFO;
 
+    if (gDecoy) return;   // ForestRadio E18: в «Гражданке» F-функции скрыты
+
 #ifdef ENABLE_FEAT_F4HWN_RESCUE_OPS
     if(gEeprom.MENU_LOCK == true) {
         if(Key == 2) { // Enable A/B only
@@ -113,7 +115,15 @@ static void processFKeyFunction(const KEY_Code_t Key, const bool beep)
             #ifdef ENABLE_FMRADIO
                 ACTION_FM();
             #else
-                gMuteTx = !gMuteTx;            // ForestRadio E4: немой TX вкл/выкл
+                // ForestRadio E13: лут — частоту VFO в первый свободный канал памяти
+                if (IS_FREQ_CHANNEL(gTxVfo->CHANNEL_SAVE)) {
+                    uint8_t ch;
+                    for (ch = MR_CHANNEL_FIRST; ch <= MR_CHANNEL_LAST; ch++)
+                        if (!RADIO_CheckValidChannel(ch, false, 0))
+                            break;
+                    if (ch <= MR_CHANNEL_LAST)
+                        SETTINGS_SaveChannel(ch, gEeprom.TX_VFO, gTxVfo, 2);
+                }
                 gUpdateStatus  = true;
                 gUpdateDisplay = true;
             #endif
@@ -667,6 +677,8 @@ static void MAIN_Key_EXIT(bool bKeyPressed, bool bKeyHeld)
 
 static void MAIN_Key_MENU(bool bKeyPressed, bool bKeyHeld)
 {
+    if (gDecoy) return;   // ForestRadio E18: в «Гражданке» меню недоступно
+
     if (bKeyPressed && !bKeyHeld) // menu key pressed
         gBeepToPlay = BEEP_1KHZ_60MS_OPTIONAL;
 

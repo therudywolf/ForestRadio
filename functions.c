@@ -147,11 +147,10 @@ void FUNCTION_PowerSave() {
         GUI_SelectNextDisplay(DISPLAY_MAIN);
 }
 
-// ForestRadio: глобалы маскировки.
-// gMuteTx=1    -> TX только несущая (микрофонный АЦП заглушен).
-// gScrambler   -> 0=off, 1..10 = пресет инверсии голоса (BK4819_EnableScramble(n-1)).
-uint8_t gMuteTx    = 0;
+// ForestRadio: gScrambler 0=off, 1..10 = пресет инверсии голоса (BK4819_EnableScramble(n-1)).
 uint8_t gScrambler = 0;
+// ForestRadio E18: «Гражданка» (decoy). 0 = полный режим, 1 = урезанный (меню/F-функции скрыты).
+uint8_t gDecoy = 0;
 
 void FUNCTION_Transmit()
 {
@@ -241,10 +240,6 @@ void FUNCTION_Transmit()
     if (gSetting_backlight_on_tx_rx & BACKLIGHT_ON_TR_TX) {
         BACKLIGHT_TurnOn();
     }
-
-    // ForestRadio E4: немой TX — глушим микрофонный АЦП (бит 2 REG_30) -> чистая несущая
-    if (gMuteTx)
-        BK4819_WriteRegister(BK4819_REG_30, BK4819_ReadRegister(BK4819_REG_30) & ~(1u << 2));
 }
 
 

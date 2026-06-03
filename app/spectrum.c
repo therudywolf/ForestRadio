@@ -110,6 +110,7 @@ static const ScanRangePreset scanRangePresets[] = {
     { "FM BC",    8750000, 10800000, S_STEP_100_0kHz, MODULATION_FM }, // вещательное FM
 };
 static uint8_t scanRangePresetIdx = 0;
+static bool scanRangePresetActive = false;  // показывать имя пресета на экране
 #endif
 
 uint32_t fMeasure = 0;
@@ -1156,6 +1157,8 @@ static void DrawNums()
         if (gScanRangeStart)
         {
             sprintf(String, "%ux", GetStepsCountDisplay());
+            if (scanRangePresetActive)  // ForestRadio: имя пресет-диапазона
+                GUI_DisplaySmallest(scanRangePresets[scanRangePresetIdx].name, 42, 1, false, true);
         }
         else
 #endif
@@ -1250,6 +1253,7 @@ static void ApplyScanRangePreset(uint8_t idx)
     const ScanRangePreset *p = &scanRangePresets[idx];
     gScanRangeStart = p->startFreq;
     gScanRangeStop  = p->stopFreq;
+    scanRangePresetActive = true;
     settings.scanStepIndex = p->step;
     settings.stepsCount    = STEPS_128;
     currentFreq = initialFreq = gScanRangeStart;

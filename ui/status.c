@@ -184,6 +184,10 @@ void UI_DisplayStatus()
         x += sizeof(gFontDWR) + 3;
     #endif
 
+    // ForestRadio: индикатор скремблера (инверсия голоса включена)
+    if (gScrambler > 0)
+        UI_PrintStringSmallBufferNormal("SCR", line + 46);
+
 #ifdef ENABLE_VOX
     // VOX indicator
     if (gEeprom.VOX_SWITCH) {

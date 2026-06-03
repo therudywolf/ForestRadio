@@ -35,8 +35,8 @@ typedef enum FUNCTION_Type_t FUNCTION_Type_t;
 
 extern FUNCTION_Type_t       gCurrentFunction;
 
-extern uint8_t               gMuteTx;     // ForestRadio: немой TX (только несущая)
 extern uint8_t               gScrambler;  // ForestRadio: скремблер 0=off, 1..10
+extern uint8_t               gDecoy;      // ForestRadio E18: decoy «Гражданка» (PTT+1 при старте)
 
 void FUNCTION_Init(void);
 void FUNCTION_Select(FUNCTION_Type_t Function);

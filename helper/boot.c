@@ -28,6 +28,7 @@
 #include "misc.h"
 #include "radio.h"
 #include "settings.h"
+#include "functions.h"
 #include "ui/menu.h"
 #include "ui/ui.h"
 
@@ -61,6 +62,9 @@ BOOT_Mode_t BOOT_GetMode(void)
         if (Keys[0] == KEY_SIDE1)
             return BOOT_MODE_F_LOCK;
 
+        if (Keys[0] == KEY_1)            // ForestRadio: PTT+1 -> decoy «Гражданка»
+            return BOOT_MODE_DECOY;
+
         #ifdef ENABLE_AIRCOPY
             if (Keys[0] == KEY_SIDE2)
                 return BOOT_MODE_AIRCOPY;
@@ -72,11 +76,19 @@ BOOT_Mode_t BOOT_GetMode(void)
 
 void BOOT_ProcessMode(BOOT_Mode_t Mode)
 {
-    if (Mode == BOOT_MODE_F_LOCK)
+    if (Mode == BOOT_MODE_DECOY)
+    {
+        gDecoy = 1;   // ForestRadio E18: «Гражданка» — урезанный режим (PTT+1 при старте)
+        #ifdef ENABLE_FEAT_F4HWN_RESUME_STATE
+            gEeprom.CURRENT_STATE = 0;
+        #endif
+        GUI_SelectNextDisplay(DISPLAY_MAIN);
+    }
+    else if (Mode == BOOT_MODE_F_LOCK)
     {
         #ifdef ENABLE_FEAT_F4HWN_RESUME_STATE
             gEeprom.CURRENT_STATE = 0; // Don't resume is active...
-        #endif 
+        #endif
         GUI_SelectNextDisplay(DISPLAY_MENU);
     }
     #ifdef ENABLE_AIRCOPY
