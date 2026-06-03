@@ -817,14 +817,11 @@ void RADIO_SetupRegisters(bool switchToForeground)
                     break;
             }
 
-#ifndef ENABLE_FEAT_F4HWN
-            if (gRxVfo->SCRAMBLING_TYPE > 0 && gSetting_ScrambleEnable)
-                BK4819_EnableScramble(gRxVfo->SCRAMBLING_TYPE - 1);
+            // ForestRadio E3: тот же скремблер на приём (де-инверсия)
+            if (gScrambler > 0)
+                BK4819_EnableScramble(gScrambler - 1);
             else
                 BK4819_DisableScramble();
-#else
-                BK4819_DisableScramble();
-#endif
         }
     }
     #ifdef ENABLE_NOAA

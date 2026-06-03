@@ -112,6 +112,10 @@ static void processFKeyFunction(const KEY_Code_t Key, const bool beep)
         case KEY_0:
             #ifdef ENABLE_FMRADIO
                 ACTION_FM();
+            #else
+                gMuteTx = !gMuteTx;            // ForestRadio E4: немой TX вкл/выкл
+                gUpdateStatus  = true;
+                gUpdateDisplay = true;
             #endif
             break;
 
@@ -252,8 +256,10 @@ static void processFKeyFunction(const KEY_Code_t Key, const bool beep)
         case KEY_7:
 #ifdef ENABLE_VOX
             ACTION_Vox();
-//#else
-//          toggle_chan_scanlist();
+#else
+            gScrambler = gScrambler ? 0 : 4;   // ForestRadio E3: скремблер вкл/выкл (~2900 Гц)
+            gUpdateStatus  = true;
+            gUpdateDisplay = true;
 #endif
             break;
 

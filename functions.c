@@ -147,6 +147,12 @@ void FUNCTION_PowerSave() {
         GUI_SelectNextDisplay(DISPLAY_MAIN);
 }
 
+// ForestRadio: глобалы маскировки.
+// gMuteTx=1    -> TX только несущая (микрофонный АЦП заглушен).
+// gScrambler   -> 0=off, 1..10 = пресет инверсии голоса (BK4819_EnableScramble(n-1)).
+uint8_t gMuteTx    = 0;
+uint8_t gScrambler = 0;
+
 void FUNCTION_Transmit()
 {
     // if DTMF is enabled when TX'ing, it changes the TX audio filtering !! .. 1of11
@@ -226,18 +232,19 @@ void FUNCTION_Transmit()
     }
 #endif
 
-#ifdef ENABLE_FEAT_F4HWN
-    BK4819_DisableScramble();
-#else
-    if (gCurrentVfo->SCRAMBLING_TYPE > 0 && gSetting_ScrambleEnable)
-        BK4819_EnableScramble(gCurrentVfo->SCRAMBLING_TYPE - 1);
+    // ForestRadio E3: аналоговый скремблер (инверсия голоса), глобальный тумблер
+    if (gScrambler > 0)
+        BK4819_EnableScramble(gScrambler - 1);
     else
         BK4819_DisableScramble();
-#endif
 
     if (gSetting_backlight_on_tx_rx & BACKLIGHT_ON_TR_TX) {
         BACKLIGHT_TurnOn();
     }
+
+    // ForestRadio E4: немой TX — глушим микрофонный АЦП (бит 2 REG_30) -> чистая несущая
+    if (gMuteTx)
+        BK4819_WriteRegister(BK4819_REG_30, BK4819_ReadRegister(BK4819_REG_30) & ~(1u << 2));
 }
 
 
