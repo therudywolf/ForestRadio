@@ -56,7 +56,6 @@ const t_menu_item MenuList[] =
     {"Scramb",      MENU_SCR           }, // was "SCR"
 #endif
     {"BusyCL",      MENU_BCL           }, // was "BCL"
-    {"Compnd",      MENU_COMPAND       },
     {"Mode",        MENU_AM            }, // was "AM"
 #ifdef ENABLE_FEAT_F4HWN
     {"TXLock",      MENU_TX_LOCK       }, 
@@ -102,7 +101,6 @@ const t_menu_item MenuList[] =
 #endif
     {"Roger",       MENU_ROGER         },
     {"STE",         MENU_STE           },
-    {"RP STE",      MENU_RP_STE        },
     {"1 Call",      MENU_1_CALL        },
 #ifdef ENABLE_ALARM
     {"AlarmT",      MENU_AL_MOD        },
@@ -110,15 +108,10 @@ const t_menu_item MenuList[] =
 #ifdef ENABLE_DTMF_CALLING
     {"ANI ID",      MENU_ANI_ID        },
 #endif
-    {"UPCode",      MENU_UPCODE        },
-    {"DWCode",      MENU_DWCODE        },
-    {"PTT ID",      MENU_PTT_ID        },
-    {"D ST",        MENU_D_ST          },
 #ifdef ENABLE_DTMF_CALLING
     {"D Resp",      MENU_D_RSP         },
     {"D Hold",      MENU_D_HOLD        },
 #endif
-    {"D Prel",      MENU_D_PRE         },
 #ifdef ENABLE_DTMF_CALLING
     {"D Decd",      MENU_D_DCD         },
     {"D List",      MENU_D_LIST        },
@@ -140,13 +133,9 @@ const t_menu_item MenuList[] =
 #ifdef ENABLE_FEAT_F4HWN
     {"SetPwr",      MENU_SET_PWR       },
     {"SetPTT",      MENU_SET_PTT       },
-    {"SetTOT",      MENU_SET_TOT       },
-    {"SetEOT",      MENU_SET_EOT       },
     {"SetCtr",      MENU_SET_CTR       },
     {"SetInv",      MENU_SET_INV       },
     {"SetLck",      MENU_SET_LCK       },
-    {"SetMet",      MENU_SET_MET       },
-    {"SetGUI",      MENU_SET_GUI       },
     {"SetTmr",      MENU_SET_TMR       },
 #ifdef ENABLE_FEAT_F4HWN_SLEEP
     {"SetOff",       MENU_SET_OFF      },
